@@ -29,6 +29,6 @@ jobs:
 
     - name: Run Ansible Playbook
       working-directory: ./deploy
-      run: ansible-playbook --vvv playbook.yml
+      run: ansible-playbook -vvv playbook.yml
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'false'
