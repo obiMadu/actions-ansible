@@ -1,4 +1,4 @@
-name: Deploy Ansible Playbook
+name: Deploy with Ansible
 
 on:
   push:
@@ -10,31 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
-          ansible-galaxy collection install community.docker
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Make Inventory
-        working-directory: ./deploy
-        run: |
-          echo "[server]" > ./inventory.ini
-          echo "${{secrets.SERVER_IP}}" >> ./inventory.ini
-        env:
-          SERVER_IP: ${{secrets.SERVER_IP}}
+    - name: Install Ansible
+      working-directory: ./deploy
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip
+        sudo pip install ansible
+        ansible-galaxy collection install community.docker
+        sudo echo -e "[server]\n${{secrets.SERVER_IP}}" > inventory.ini
 
-      - name: Setup SSH Key
-        working-directory: ./deploy
-        run: echo '${{secrets.SSH_PRIVATE_KEY}}' > ./ssh-key
-  
-      - name: Set Permissions for SSH Key
-        working-directory: ./deploy
-        run: chmod 600 ./ssh-key
-
-      - name: Run Ansible Playbook
-        working-directory: ./deploy
-        run: ansible-playbook --private-key=ssh-key playbook.yml
+    - name: Run Ansible Playbook
+      working-directory: ./deploy
+      run: ansible-playbook playbook.yml
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: 'false'
