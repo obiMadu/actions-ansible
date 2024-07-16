@@ -39,4 +39,4 @@ jobs:
       - name: Run Ansible Playbook
         working-directory: ./deploy
         shell: bash
-        run: ansible-playbook playbook.yml
+        run: ansible-playbook -vvv --private-key /home/runner/.ssh/id_rsa playbook.yml
