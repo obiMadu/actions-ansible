@@ -8,6 +8,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./deploy
 
     steps:
     - name: Checkout repository
@@ -19,16 +23,18 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Install Ansible
-      working-directory: ./deploy
       run: |
         sudo apt update
-        sudo apt install -y python3-pip
-        sudo pip install ansible
-        ansible-galaxy collection install community.docker
-        sudo echo -e "[server]\n${{secrets.SERVER_IP}}" > inventory.ini
+        sudo apt install -y ansible
+        # sudo pip install ansible
+
+    - name: Install Ansible Collections
+      run: ansible-galaxy collection install community.docker  
+
+    - name: Create Inventory;
+      run: sudo echo -e "[server]\n${{secrets.SERVER_IP}}" > inventory.ini
 
     - name: Run Ansible Playbook
-      working-directory: ./deploy
-      run: ansible-playbook -vvv playbook.yml
+      run: ansible-playbook playbook.yml
       env:
         ANSIBLE_HOST_KEY_CHECKING: 'false'
