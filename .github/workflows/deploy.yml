@@ -13,15 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup SSH 
-        shell: bash
-        run: |
-         eval `ssh-agent -s`
-         mkdir -p /home/runner/.ssh/
-         touch /home/runner/.ssh/id_rsa
-         echo -e "${{secrets.SSH_PRIVATE_KEY}}" > /home/runner/.ssh/id_rsa
-         chmod 700 /home/runner/.ssh/id_rsa
-
       - name: Install Ansible
         run: |
           sudo apt-get update
@@ -30,13 +21,20 @@ jobs:
 
       - name: Make Inventory
         working-directory: ./deploy
-        shell: bash
         run: |
-          touch ./inventory.ini
-          echo -e "[server]\n${{secrets.SERVER_IP}}" > ./inventory.ini
-          cat inventory.ini
+          echo "[server]" > ./inventory.ini
+          echo "${{secrets.SERVER_IP}}" >> ./inventory.ini
+        env:
+          SERVER_IP: ${{secrets.SERVER_IP}}
+
+      - name: Setup SSH Key
+        working-directory: ./deploy
+        run: echo '${{secrets.SSH_PRIVATE_KEY}}' > ./ssh-key
+  
+      - name: Set Permissions for SSH Key
+        working-directory: ./deploy
+        run: chmod 600 ./ssh-key
 
       - name: Run Ansible Playbook
         working-directory: ./deploy
-        shell: bash
-        run: ansible-playbook -vvv --private-key /home/runner/.ssh/id_rsa playbook.yml
+        run: ansible-playbook --private-key=ssh-key playbook.yml
